@@ -1,0 +1,25 @@
+//Create a backend to receive and broadcast locations.
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+let salesRepLocation = {}; // Store latest locations
+
+io.on("connection", (socket) => {
+  console.log("Sales Rep Connected");
+
+  socket.on("updateLocation", (location) => {
+    salesRepLocation = location;
+    io.emit("locationUpdate", location); // Broadcast to admins
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Sales Rep Disconnected");
+  });
+});
+
+server.listen(5000, () => console.log("Server running on port 5000"));

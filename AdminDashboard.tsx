@@ -9,6 +9,9 @@ import {
 } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
+import io from "socket.io-client";
+
+const socket = io("http://your-server-ip:5000");
 
 export default function AdminDashboard() {
   // State to store received reports
@@ -34,6 +37,19 @@ export default function AdminDashboard() {
       Alert.alert("Error", "Failed to fetch reports.");
     }
   };
+
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    socket.on("locationUpdate", (newLocation) => {
+      setLocation(newLocation);
+    });
+
+    return () => {
+      socket.off("locationUpdate");
+    };
+  }, []);
+
 
   const fetchInvoices = async () => {
     try {
@@ -164,6 +180,11 @@ export default function AdminDashboard() {
           ))
         )}
       </View>
+
+      <View>
+      <Text style={{ fontSize: 20, fontWeight: "bold" }}>Sales Rep Live Location</Text>
+      <Text>{location ? `Latitude: ${location.latitude}, Longitude: ${location.longitude}` : "Waiting for updates..."}</Text>
+    </View>
     </ScrollView>
   );
 }

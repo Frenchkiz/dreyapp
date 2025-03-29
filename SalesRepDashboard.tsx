@@ -9,6 +9,36 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import * as Location from "expo-location";
+import io from "socket.io-client";
+
+const socket = io("http://your-server-ip:5000"); // Change to your backend IP
+
+
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Error", "Location permission denied.");
+        return;
+      }
+
+      // Fetch location every 5 seconds
+      setInterval(async () => {
+        let loc = await Location.getCurrentPositionAsync({});
+        const newLocation = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+        setLocation(newLocation);
+
+        // Send location to server
+        socket.emit("updateLocation", newLocation);
+      }, 5000);
+    })();
+  }, []);
+
+  
+
 
 export default function SalesRepDashboard() {
   const [customers, setCustomers] = useState<
@@ -292,6 +322,10 @@ export default function SalesRepDashboard() {
           ))
         )}
       </View>
+
+      <View>
+      <Text>Live Location: {location ? `${location.latitude}, ${location.longitude}` : "Fetching..."}</Text>
+    </View>
     </ScrollView>
   );
 }
